@@ -3,8 +3,8 @@ class Product:
     def __init__(self, id, name, quantity, price):
         self._id = id
         self._name = name
-        self._quantity = quantity
-        self._price = price
+        self._quantity = int(quantity)
+        self._price = float(price)
            
     @property #getter
     def product_id(self):
@@ -22,6 +22,6 @@ class Product:
     def product_price(self):
         return self._price
 
-    # @property #setter
-    # def update_quantity(self, quantity):
-    #     self._quantity = quantity
+    # setter to update quantity
+    def update_quantity(self, quantity):
+        self._quantity = int(quantity)

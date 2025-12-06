@@ -1,4 +1,7 @@
 from product import Product
+from customer import Customer
+from transaction import Transaction
+from datetime import datetime
 
 products = []
 customers = []
@@ -12,7 +15,7 @@ def add_product():
     product = find_product(new_id)
 
     #if product ID is not found in list
-    if product == None:
+    if product is None:
         new_name = input("Enter product name: ")
         new_quantity = input("Enter quantity: ")
         new_price = input("Enter price: $")
@@ -22,15 +25,21 @@ def add_product():
 
         #add new product object to list of products
         products.append(new_product)
-
+        print("Product added.")
+    else:
+        print("Product ID already exists.")
 
 def remove_product():
-    search_id = input("Input ID for product you are searching for ")
+    #get product ID from user
+    search_id = input("Input ID for product you are searching for: ")
     product = find_product(search_id)
 
     #delete product if ID exists in list
-    if product != None:
+    if product is not None:
         products.remove(product)
+        print("Product removed.")
+    else:
+        print("Product not found.")
 
 def find_product(search_id):
     #check if there are any stored products
@@ -38,7 +47,7 @@ def find_product(search_id):
         #find product by its id
         for p in products:
             if p.product_id == search_id:
-                print(f"{p._name} found in products list")
+                print(f"{p.product_name} found in products list")
                 return p
         print("Product not found")
         return None
@@ -46,33 +55,111 @@ def find_product(search_id):
         print("No products in inventory")
         return None
 
-def add_customer():
-    #input customer information
-    #create new customer object
-    #check if customer already exists
-    #add to list
-    print("customer added")
-
-def record_transaction():
-    print("transaction recorded")
-
-def generate_sales_report():
-    print("printing sales report")
-
-def update_product_quantity():
-    #get product id
-    #find_product()
-    #get product index in products
-    #set new quantity
-    print("quantity updated")
-
 def print_inventory():
     count = 1
     if len(products) == 0:
         print("No products in inventory")
+        return
+
+    #print all products in inventory
     for p in products:
-        print(f"\nProduct ID: {p._id}")
-        print(f"Product name: {p._name}")
-        print(f"Product quantity: {p._quantity}")
-        print(f"Product price: {p._price}")
-        count+=1
+        print(f"\nProduct ID: {p.product_id}")
+        print(f"Product name: {p.product_name}")
+        print(f"Product quantity: {p.product_quantity}")
+        print(f"Product price: {p.product_price}")
+        count += 1
+
+def add_customer():
+    #input customer information
+    new_id = input("Enter customer ID: ")
+
+    #check if customer already exists
+    for c in customers:
+        if c.id == new_id:
+            print("Customer already exists.")
+            return
+
+    #create new customer object
+    new_name = input("Enter customer name: ")
+    new_customer = Customer(new_id, new_name)
+
+    #add to list
+    customers.append(new_customer)
+    print("Customer added")
+
+def update_product_quantity(product, quantity_sold):
+    #get new quantity and update product
+    new_quantity = product.product_quantity - quantity_sold
+    product.update_quantity(new_quantity)
+    print(f"Updated quantity for {product.product_name}: {product.product_quantity}")
+
+def record_transaction():
+    #record a customer purchase
+    customer_id = input("Enter customer ID: ")
+    customer = None
+
+    #find customer in list
+    for c in customers:
+        if c.id == customer_id:
+            customer = c
+            break
+    if customer is None:
+        print("Customer not found.")
+        return
+
+    #collect purchased items
+    items = []
+    while True:
+        product_id = input("Enter product ID (or 'done' to finish): ")
+        if product_id.lower() == "done":
+            break
+        product = find_product(product_id)
+        if product is None:
+            continue
+        qty = int(input(f"Enter quantity for {product.product_name}: "))
+        if qty > product.product_quantity:
+            print("Insufficient stock.")
+            continue
+        items.append((product, qty))
+
+    if not items:
+        print("No items purchased.")
+        return
+
+    #calculate total cost and update quantities
+    total_cost = 0
+    for product, qty in items:
+        total_cost += product.product_price * qty
+        update_product_quantity(product, qty)
+
+    #generate transaction ID
+    transaction_id = len(transactions) + 1
+    date = datetime.now().strftime("%Y-%m-%d")
+
+    #create and store transaction
+    new_transaction = Transaction(transaction_id, customer, items, total_cost, date)
+    transactions.append(new_transaction)
+
+    print(f"Transaction recorded. Total cost: ${total_cost}")
+
+def generate_sales_report():
+    #print all recorded transactions
+    if len(transactions) == 0:
+        print("No transactions recorded.")
+        return
+
+    total_revenue = 0
+    for t in transactions:
+        print(f"\nTransaction ID: {t.id}")
+        print(f"Customer: {t.customer.name}")
+        print(f"Date: {t.date}")
+        print("Items:")
+        for product, qty in t.items:
+            print(f"  {product.product_name} x {qty}")
+        print(f"Transaction total: ${t.total_cost}")
+        total_revenue += t.total_cost
+
+    #print summary totals
+    print("\n--- Summary ---")
+    print(f"Total revenue: ${total_revenue}")
+    print(f"Total transactions: {len(transactions)}")
